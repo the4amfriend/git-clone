@@ -1,0 +1,31 @@
+name: Build and Test Git
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Git source
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            make autoconf gcc libcurl4-openssl-dev \
+            libexpat1-dev gettext libz-dev libssl-dev \
+            asciidoc xmlto docbook2x
+
+      - name: Configure and build
+        run: |
+          make configure
+          ./configure --prefix=/usr
+          make -j$(nproc)
+
+      - name: Run test suite
+        run: make test
