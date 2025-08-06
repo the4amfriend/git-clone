@@ -1,0 +1,53 @@
+name: Build and Test Git 3.5
+
+on:
+  workflow_dispatch:
+
+env:
+  PREFIX: /usr/local-ssl3.5
+  EXPAT_ROOT: /usr/local/expat
+  _RLD_FIRST_LIB_PATH: /usr/local-ssl3.5/lib:/usr/local/lib
+  PATH: /usr/coreutils/bin:/usr/local/bin:/usr/bin:/bin:/usr/ucb
+  CFLAGS: "-g -O2 -Winline -D_LARGEFILE64_SOURCE=1 -D_FILE_OFFSET_BITS=64 -I/usr/local-ssl3.5/include -I/usr/coreutils/include -I/usr/local/expat/include"
+  LDFLAGS: "-D_LARGEFILE64_SOURCE=1 -D_FILE_OFFSET_BITS=64 /usr/lib/x86_64-linux-gnu/libz.a -L/usr/local-ssl3.5/lib -L/usr/lib/x86_64-linux-gnu -L/usr/local/expat/lib"
+  SHELL: /bin/bash
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            make gcc autoconf libcurl4-openssl-dev libexpat1-dev \
+            libz-dev libssl-dev coreutils bash
+
+      - name: Checkout Git source (v3.5.0)
+        run: |
+          git clone --branch v3.5.0 --depth 1 https://github.com/git/git.git
+          cd git
+          git submodule update --init --recursive
+
+      - name: Build Git (3.5)
+        working-directory: ./git
+        run: |
+          make configure
+          ./configure --prefix=$PREFIX
+          make NO_TCLTK=NoThanks V=1 \
+            prefix=$PREFIX \
+            CFLAGS="$CFLAGS" \
+            LDFLAGS="$LDFLAGS" \
+            SHELL=$SHELL
+
+      - name: Run Git Tests (3.5)
+        working-directory: ./git
+        run: |
+          echo "Running tests for 3.5"
+          GIT_TEST_DEFAULT_REF_FORMAT=reftable GIT_TEST_CLONE_2GB=true \
+          make -k test V=1 \
+            NO_TCLTK=NoThanks \
+            CFLAGS="$CFLAGS" \
+            LDFLAGS="$LDFLAGS" \
+            TEST_LINT= \
+            SHELL=$SHELL || echo "Test failure is non-fatal"
