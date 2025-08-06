@@ -28,9 +28,10 @@ jobs:
           git init git
           cd git
           git remote add origin https://github.com/git/git.git
-          git fetch --tags --force --progress --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+          git fetch --depth=1 origin refs/tags/v3.5.0:refs/tags/v3.5.0
           git checkout v3.5.0
           git submodule update --init --recursive
+
 
       - name: Build Git (3.5)
         working-directory: ./git
