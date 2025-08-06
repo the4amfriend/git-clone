@@ -25,7 +25,7 @@ jobs:
 
       - name: Checkout Git source (v3.5.0)
         run: |
-          git clone --branch v3.5.0 --depth 1 https://github.com/git/git.git
+          git fetch --tags --force --progress --depth=1 -- https://github.com/git/git.git +refs/heads/*:refs/remotes/origin/*
           cd git
           git submodule update --init --recursive
 
